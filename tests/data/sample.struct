@@ -1,0 +1,5 @@
+// Sample struct definition for testing
+struct Simple {
+    BYTE Field1[5];
+    BYTE Field2[3];
+} txt;

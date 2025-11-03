@@ -1,0 +1,63 @@
+/* 
+  構造体定義サンプル
+  PDF のバイナリ構造解析用サンプル
+*/
+
+struct PDF_HEADER {
+  BYTE Header[8];        // "%PDF-1.x" の8B（例: %PDF-1.7）
+  BYTE HeaderEOL[2];     // ヘッダ行の改行（CRLF想定。LFの可能性があるなら[1]に）
+  BYTE BinLineLead[2];   // バイナリコメント行の先頭2B（例: 25 B5 = '%' + 0xB5）
+  BYTE Next32[32];       // 以降の32Bを観察用スナップショット
+} pdf;
+
+/* 
+  構造体定義サンプル
+  Windows Bitmap (BMP) のバイナリ構造解析用サンプル
+  ヘッダ部分のフィールドを固定長で定義し、可視化目的で使用する。
+  対応: BMP v3 (BITMAPINFOHEADER)
+*/
+struct BMP_HEADER {
+  BYTE Signature[2];        // "BM" 固定 (0x42 0x4D)
+  BYTE FileSize[4];         // ファイル全体のサイズ (リトルエンディアン)
+  BYTE Reserved1[2];        // 予約領域1 (通常 0)
+  BYTE Reserved2[2];        // 予約領域2 (通常 0)
+  BYTE PixelOffset[4];      // 画像データ先頭までのオフセット (例: 54)
+} bmp;
+
+/*
+  DIBヘッダ部 (BITMAPINFOHEADER 40B)
+  画像の幅・高さ・ビット深度・圧縮形式などを格納
+*/
+struct BMP_DIBINFO {
+  BYTE HeaderSize[4];       // このヘッダ構造体のサイズ (40)
+  BYTE Width[4];            // 画像の幅 (px)
+  BYTE Height[4];           // 画像の高さ (px)
+  BYTE Planes[2];           // プレーン数 (常に 1)
+  BYTE BitsPerPixel[2];     // ビット深度 (例: 24)
+  BYTE Compression[4];      // 圧縮方式 (0=非圧縮)
+  BYTE ImageSize[4];        // 画像データサイズ (圧縮後サイズ)
+  BYTE Xppm[4];             // 水平解像度 (px/m)
+  BYTE Yppm[4];             // 垂直解像度 (px/m)
+  BYTE ColorsUsed[4];       // 使用カラー数
+  BYTE ColorsImportant[4];  // 重要カラー数
+} bmp;
+
+/*
+  パレット情報（24bit BMPでは省略されることが多い）
+  例として1エントリ(4B)分だけ定義しておく
+*/
+struct BMP_PALETTE_ENTRY {
+  BYTE Blue[1];
+  BYTE Green[1];
+  BYTE Red[1];
+  BYTE Reserved[1];
+} bmp;
+
+/*
+  ピクセルデータ先頭部分を観察する構造体
+  実際のデータ長は PixelOffset に依存する。
+  ここではサンプルとして先頭行の64Bを確認できるようにしている。
+*/
+struct BMP_PIXEL_HEAD {
+  BYTE Data[64];
+} bmp;
