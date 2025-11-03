@@ -18,7 +18,6 @@
 
 ## 📖 目次
 
-- [要件](#要件)
 - [インストール](#インストール)
 - [使い方（クイック）](#使い方クイック)
 - [設定ファイルの書き方](#設定ファイルの書き方)
@@ -26,20 +25,18 @@
 - [使用例](#使用例)
 - [動作仕様](#動作仕様)
 - [トラブルシュート](#トラブルシュート)
-- [テスト](#テスト)
-- [開発](#開発)
-
----
-
-## 要件
-
-- Python **3.10+** (型ヒント `str | None` を使用)
 
 ---
 
 ## インストール
 
-### 方法 1: リポジトリをクローンして使用
+### 方法 1: pip からインストール
+
+```bash
+pip install fixedrec
+```
+
+### 方法 2: (開発用)リポジトリをクローンして使用
 
 ```bash
 # 1. リポジトリをクローン
@@ -62,16 +59,7 @@ pip install -e .
 
 # 5. 実行確認
 python -m fixedrec --help
-# または
 fixedrec --help
-```
-
-### 方法 2: 直接インストール
-
-```bash
-git clone https://github.com/tsuutar/fixedrec.git
-cd fixedrec
-pip install .
 ```
 
 ---
@@ -79,16 +67,11 @@ pip install .
 ## 使い方（クイック）
 
 ```bash
-# パッケージとしてインストール後
 # BMPファイルのヘッダ出力(16進数の場合)
 fixedrec -i input.bmp -o out.tsv -c layout.struct --struct BMP_HEADER --in-term none --sep "\t" --escape hex --max-rows 1 --header-structs
 
 # BMPファイルのヘッダ出力(生バイトの場合)
 fixedrec -i input.bmp -o out2.tsv -c layout.struct --struct BMP_HEADER --in-term none --sep "\t" --max-rows 1
-
-# または python -m で実行
-# BMPファイルのヘッダ出力
-python -m fixedrec -i input.bmp -o out.tsv -c layout.struct --struct BMP_HEADER --in-term none --sep "\t" --escape hex --max-rows 1 --header-structs
 ```
 
 - デフォルト: 入力終端=CRLF、出力行末=CRLF、区切り=TAB
@@ -101,7 +84,7 @@ python -m fixedrec -i input.bmp -o out.tsv -c layout.struct --struct BMP_HEADER 
 `layout.struct`（UTF-8 推奨。`//` と `/* ... */` コメント可）
 
 ```c
-/* 例: 2種類の構造体。閉じカッコ後に拡張子を列挙してマッピング */
+/* 例: 閉じカッコ後に拡張子を列挙してマッピング */
 struct FIX47 {
   BYTE Title[10];
   BYTE COL_A[15];
@@ -113,6 +96,14 @@ struct FIX32 {
   BYTE Bar[8];
   BYTE Baz[16];
 } bin;             // .bin に適用
+
+struct BMP_HEADER {
+  BYTE Signature[2];        // "BM" 固定 (0x42 0x4D)
+  BYTE FileSize[4];         // ファイル全体のサイズ (リトルエンディアン)
+  BYTE Reserved1[2];        // 予約領域1 (通常 0)
+  BYTE Reserved2[2];        // 予約領域2 (通常 0)
+  BYTE PixelOffset[4];      // 画像データ先頭までのオフセット (例: 54)
+} bmp;
 ```
 
 - **構造体名**は必須（複数定義する場合、無名は不可推奨）
@@ -254,96 +245,6 @@ fixedrec -i data.dat -c layout.struct --dump-layout
 ```bash
 # 全テストを実行
 python tests/test_cli_basic.py
-
 # または unittestフレームワークで実行
 python -m unittest tests.test_cli_basic
 ```
-
-### テストの内容
-
-- `TestStripComments`: コメント削除機能
-- `TestParseExtList`: 拡張子リストのパース
-- `TestParseStructsConfig`: struct 定義ファイルのパース
-- `TestParseBytesFromArg`: バイト列引数のパース
-- `TestParseTerm`: 終端文字列のパース
-- `TestEscapeBytes`: バイトエスケープ機能
-- `TestChooseStruct`: struct 自動選択機能
-- `TestIntegration`: 統合テスト（実ファイルでの動作確認）
-
-### ダミー入力の生成例
-
-```python
-with open("dummy.dat", "wb") as f:
-    for i in range(3):
-        f.write(b"TITLE_____")              # 10B
-        f.write(b"A______________")         # 15B
-        f.write(b"B____________________")   # 20B
-        f.write(b"\r\n")                    # CRLF
-```
-
-### 設定確認
-
-```bash
-fixedrec -i dummy.dat -c layout.struct --dump-layout
-```
-
-### 差分チェック
-
-```bash
-fixedrec -i dummy.dat -o out.tsv -c layout.struct
-hexdump -C out.tsv
-```
-
----
-
-## 🔧 開発
-
-### ビルドとパッケージング
-
-```bash
-# ビルド用ツールをインストール
-pip install build
-
-# パッケージをビルド
-python -m build
-
-# dist/ ディレクトリに .whl と .tar.gz が生成されます
-```
-
----
-
-## 🪟 Windows 用 exe を作る（PyInstaller）
-
-以下は Windows (PowerShell) 環境で単一実行ファイル（one-file exe）を作る手順の例です。
-
-注意点:
-
-- PyInstaller は実行環境に依存するため、Windows 用 exe は Windows 上でビルドしてください。
-- ウイルス対策ソフトが単一ファイル化した exe を誤検出することがあります。リリース時は署名や検証手順を検討してください。
-
-手順の概要:
-
-1. 必要パッケージを追加インストール
-
-```powershell
-pip install pyinstaller
-```
-
-4. PyInstaller でビルド
-
-```powershell
-# ワンファイル（単一 exe）
-pyinstaller --noconfirm --noupx --clean --onefile --name fixedrec entry.py
-```
-
-5. 出力物の確認
-
-`dist\fixedrec.exe` が生成されます。簡単に動作確認:
-
-```powershell
-.\dist\fixedrec.exe --help
-```
-
-ヒント
-
-- 外部ファイルは実行ファイルと同じフォルダに配置するか、フルパスを指定してください。

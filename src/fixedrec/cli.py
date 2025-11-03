@@ -213,7 +213,7 @@ def main():
     ap.add_argument("--dump-layout", action="store_true", help="レイアウトを表示して終了")
     ap.add_argument("--summary", action="store_true", help="処理サマリのみ簡潔に表示")
     ap.add_argument("--header-structs", action="store_true",
-                    help="出力ファイル先頭に設定ファイルに定義された struct 名をヘッダ行として出力します（UTF-8、--sep で結合）")
+                    help="出力ファイル先頭に使用する struct のフィールド名をヘッダ行として出力します（UTF-8、--sep で結合）")
     args = ap.parse_args()
 
     # 設定ファイル / 入出力パスを解決（exe 配布時は exe の配置先を優先）
@@ -301,12 +301,12 @@ def main():
     # 変換本体
     try:
         with open(args.input, "rb") as rf, open(args.output, "wb") as wf:
-            # ヘッダ行の出力（オプション）: 設定ファイルに定義された struct 名を sep で結合
+            # ヘッダ行の出力（オプション）: 使用する struct (sd) のフィールド名を sep で結合
             if args.header_structs:
-                struct_names = [s.name for s in structs]
-                # struct 名は UTF-8 で出力（出力はバイナリ書込なので bytes にする）
+                field_names = [name for name, _ in sd.fields]
+                # フィールド名は UTF-8 で出力（出力はバイナリ書込なので bytes にする）
                 header_bytes = sep_bytes.join(name.encode(
-                    "utf-8") for name in struct_names) + out_term_bytes
+                    "utf-8") for name in field_names) + out_term_bytes
                 wf.write(header_bytes)
             row_no = 0
             while True:

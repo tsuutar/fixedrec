@@ -4,9 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fixedrec"
-version = "1.0.0"
+version = "1.0.2"
 description = "固定長バイナリレコードをフィールドごとに分割して区切りテキスト形式で出力するツール。フィールドのバイト列はそのまま保持します。"
-readme = "Readme.md"
+readme = {file = "Readme.md", content-type = "text/markdown"}
+keywords = ["fixed-length", "binary", "record", "parser", "cli"]
+dynamic = []
 requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [
@@ -35,9 +37,10 @@ dev = [
 
 [tool.setuptools]
 package-dir = {"" = "src"}
+include-package-data = true
+packages = {find = {where = ["src"]}}
 
-[tool.setuptools.packages.find]
-where = ["src"]
+
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

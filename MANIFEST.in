@@ -1,0 +1,3 @@
+include Readme.md
+include LICENSE
+recursive-include src/fixedrec *.py

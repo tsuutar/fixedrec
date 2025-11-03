@@ -472,6 +472,51 @@ class TestIntegration(unittest.TestCase):
         # エスケープされているはず（デフォルト prefix 無し → スペース区切りの2桁HEX）
         self.assertIn(b"00 1f", output)
 
+    def test_header_structs_outputs_field_names(self):
+        """--header-structs オプションでヘッダにフィールド名が出ることを確認"""
+        # 設定ファイル作成
+        config_path = os.path.join(self.temp_dir, "layout.struct")
+        with open(config_path, "w", encoding="utf-8") as f:
+            f.write("""
+            struct HeaderTest {
+                BYTE First[2];
+                BYTE Second[3];
+            } txt;
+            """)
+
+        # 入力ファイル作成（1レコード）
+        input_path = os.path.join(self.temp_dir, "input.txt")
+        with open(input_path, "wb") as f:
+            f.write(b"AA" + b"BBB" + b"\r\n")
+
+        # 出力ファイルパス
+        output_path = os.path.join(self.temp_dir, "output.txt")
+
+        # 変換実行（ヘッダ出力有効）
+        import subprocess
+        result = subprocess.run(
+            [sys.executable, "-m", "fixedrec",
+             "-i", input_path,
+             "-o", output_path,
+             "-c", config_path,
+             "--header-structs"],
+            capture_output=True,
+            text=True
+        )
+
+        # 結果確認
+        self.assertEqual(result.returncode, 0, f"stderr: {result.stderr}")
+
+        # 出力ファイル確認
+        with open(output_path, "rb") as f:
+            output = f.read()
+
+        # 先頭行がフィールド名のヘッダで、続いてレコードが来る
+        lines = output.split(b"\r\n")
+        self.assertGreaterEqual(len(lines), 2)
+        self.assertEqual(lines[0], b"First\tSecond")
+        self.assertEqual(lines[1], b"AA\tBBB")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
